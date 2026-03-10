@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Soulful Bites | Professional Manager</title>
+    <title>Soulful Bites | Store Manager Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --gold: #D4AF37; --dark: #121212; --card: #1E1E1E; }
-        body { background-color: var(--dark); color: #E0E0E0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--dark); color: #E0E0E0; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
         .gold-text { color: var(--gold); }
         .gold-bg { background-color: var(--gold); }
-        .card { background: var(--card); border-radius: 15px; border: 1px solid #333; transition: 0.3s; }
-        .card:hover { border-color: var(--gold); }
+        .card { background: var(--card); border-radius: 15px; border: 1px solid #333; }
         .tab-active { border-bottom: 3px solid var(--gold); color: var(--gold); font-weight: bold; }
-        input { background: #2A2A2A !important; border: 1px solid #444 !important; color: white !important; }
+        input { background: #2A2A2A !important; border: 1px solid #444 !important; color: white !important; outline: none; }
         .btn-press:active { transform: scale(0.95); }
     </style>
 </head>
@@ -22,13 +21,13 @@
 
     <header class="flex justify-between items-center mb-6 sticky top-0 bg-[#121212] py-4 z-50">
         <div class="flex items-center gap-3">
-            <div class="p-2 gold-bg rounded-lg text-black font-bold text-xl">SB</div>
+            <div class="p-2 gold-bg rounded-lg text-black font-extrabold">SB</div>
             <div>
-                <h1 class="text-lg font-bold gold-text leading-tight">SOULFUL BITES</h1>
-                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Store Manager Pro</p>
+                <h1 class="text-lg font-bold gold-text">SOULFUL BITES</h1>
+                <p class="text-[9px] text-gray-500 uppercase tracking-widest">Store Manager Pro</p>
             </div>
         </div>
-        <button onclick="exportToExcel()" class="bg-emerald-700 text-white text-[10px] px-3 py-2 rounded-full font-bold btn-press">EXPORT EXCEL</button>
+        <button onclick="exportToExcel()" class="bg-emerald-700 text-white text-[10px] px-4 py-2 rounded-full font-bold btn-press shadow-lg">EXCEL REPORT</button>
     </header>
 
     <nav class="flex justify-around mb-6 border-b border-gray-800 text-xs text-gray-400">
@@ -38,7 +37,7 @@
     </nav>
 
     <div id="search-container" class="mb-6">
-        <input type="text" id="mainSearch" onkeyup="filterItems()" placeholder="Dhoondein (Search items...)" class="w-full p-4 rounded-xl outline-none shadow-lg">
+        <input type="text" id="mainSearch" onkeyup="filterItems()" placeholder="Search items (e.g. Chicken)..." class="w-full p-4 rounded-xl shadow-inner">
     </div>
 
     <div id="tab-stock" class="space-y-4">
@@ -46,109 +45,26 @@
     </div>
 
     <div id="tab-closing" class="hidden">
-        <div class="bg-yellow-900/20 p-4 rounded-xl border border-yellow-700/50 mb-4">
-            <p class="text-xs gold-text">Closing stock daalne se pehle din bhar ka use check kar lein.</p>
+        <div class="bg-yellow-900/20 p-4 rounded-xl border border-yellow-700/50 mb-4 text-xs gold-text">
+            Har item ka closing balance yahan update karein.
         </div>
         <div id="closing-list" class="space-y-4"></div>
     </div>
 
-    <div id="tab-history" class="hidden">
-        <div id="history-content" class="text-xs space-y-2">
-            <p class="text-gray-500 text-center py-10">Koi history record nahi mila.</p>
-        </div>
+    <div id="tab-history" class="hidden text-xs space-y-2" id="history-content">
+        <p class="text-gray-500 text-center py-10">Koi purana record nahi mila.</p>
     </div>
 
     <script>
         let inventory = [
             { id: 1, cat: "Meat & Seafood", name: "Whole Chicken", qty: 26, unit: "KG", min: 2 },
             { id: 2, cat: "Meat & Seafood", name: "Boneless Chicken", qty: 15, unit: "KG", min: 5 },
-            { id: 3, cat: "Meat & Seafood", name: "Mutton", qty: 10, unit: "KG", min: 3 },
-            { id: 4, cat: "Spices & Herbs", name: "National Salt", qty: 20, unit: "PKT", min: 5 },
-            { id: 5, cat: "Oils & Ghee", name: "Cooking Oil", qty: 50, unit: "LTR", min: 10 }
+            { id: 3, cat: "Oils & Ghee", name: "Cooking Oil", qty: 50, unit: "LTR", min: 10 },
+            { id: 4, cat: "Spices", name: "National Salt", qty: 15, unit: "PKT", min: 5 }
         ];
+        let logs = [];
 
-        let history = [];
-
-        function renderStock() {
+        function render() {
             const list = document.getElementById('stock-list');
-            list.innerHTML = "";
-            let currentCat = "";
-
-            inventory.forEach(item => {
-                if(item.cat !== currentCat) {
-                    currentCat = item.cat;
-                    list.innerHTML += `<h2 class="text-[10px] gold-text font-black mb-2 mt-6 tracking-[0.2em] uppercase">${currentCat}</h2>`;
-                }
-                
-                let isLow = item.qty <= item.min;
-                list.innerHTML += `
-                    <div class="card p-4 relative overflow-hidden item-node">
-                        ${isLow ? '<span class="absolute top-0 right-0 bg-red-600 text-[8px] px-2 py-1 font-bold">LOW</span>' : ''}
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="font-bold text-gray-100">${item.name}</h3>
-                                <p class="text-[9px] text-gray-500">#${item.id} · ${item.cat}</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-2xl font-black ${isLow ? 'text-red-500' : 'gold-text'}">${item.qty}</span>
-                                <span class="text-[10px] block text-gray-500">${item.unit}</span>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <input type="number" id="q-${item.id}" placeholder="Qty" class="w-20 p-2 rounded-lg text-sm text-center outline-none">
-                            <button onclick="updateQty(${item.id}, 'add')" class="flex-1 bg-emerald-600 text-white font-bold rounded-lg btn-press text-xs">+ Purchase</button>
-                            <button onclick="updateQty(${item.id}, 'sub')" class="flex-1 bg-red-600 text-white font-bold rounded-lg btn-press text-xs">- Used</button>
-                        </div>
-                    </div>`;
-            });
-        }
-
-        function updateQty(id, type) {
-            let input = document.getElementById(`q-${id}`);
-            let val = parseFloat(input.value);
-            if(!val) return;
-            let item = inventory.find(i => i.id === id);
-            
-            if(type === 'add') item.qty += val;
-            else item.qty -= val;
-            
-            history.unshift(`${new Date().toLocaleTimeString()} - ${item.name}: ${type === 'add' ? '+' : '-'}${val} ${item.unit}`);
-            input.value = "";
-            renderStock();
-        }
-
-        function showTab(tab) {
-            document.getElementById('tab-stock').classList.add('hidden');
-            document.getElementById('tab-closing').classList.add('hidden');
-            document.getElementById('tab-history').classList.add('hidden');
-            document.getElementById('tab-'+tab).classList.remove('hidden');
-            
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('tab-active'));
-            document.getElementById('t-'+tab).classList.add('tab-active');
-            
-            if(tab === 'history') renderHistory();
-        }
-
-        function renderHistory() {
-            const cont = document.getElementById('history-content');
-            cont.innerHTML = history.map(h => `<div class="p-2 border-b border-gray-800">${h}</div>`).join('') || "No history.";
-        }
-
-        function exportToExcel() {
-            const ws = XLSX.utils.json_to_sheet(inventory);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-            XLSX.writeFile(wb, "Soulful_Bites_Stock.xlsx");
-        }
-
-        function filterItems() {
-            let q = document.getElementById('mainSearch').value.toLowerCase();
-            document.querySelectorAll('.item-node').forEach(card => {
-                card.style.display = card.innerText.toLowerCase().includes(q) ? "block" : "none";
-            });
-        }
-
-        renderStock();
-    </script>
-</body>
-</html>
+            const cList = document.
+        
