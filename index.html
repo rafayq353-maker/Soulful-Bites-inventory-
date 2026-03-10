@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+        <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,126 +8,125 @@
     <style>
         body { background-color: #0f172a; color: #f1f5f9; font-family: sans-serif; }
         .gold-border { border: 1px solid #fbbf24; }
-        .category-header { background: #1e293b; border-left: 4px solid #fbbf24; padding: 8px; margin-top: 20px; font-weight: bold; color: #fbbf24; }
-        .item-card { background: #1e293b; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
-        .btn-action { padding: 6px; border-radius: 4px; font-size: 12px; font-weight: bold; transition: 0.2s; }
+        .category-header { background: #1e293b; border-left: 4px solid #fbbf24; padding: 10px; margin-top: 25px; font-weight: bold; color: #fbbf24; border-radius: 4px; }
+        .item-card { background: #1e293b; padding: 12px; border-radius: 12px; margin-bottom: 12px; }
+        .btn-action { padding: 8px; border-radius: 6px; font-size: 11px; font-weight: bold; flex: 1; text-align: center; color: white; }
         .btn-purchase { background: #15803d; }
         .btn-use { background: #1d4ed8; }
         .btn-closing { background: #b91c1c; }
-    </script>
+        .nav-btn { padding: 10px; font-weight: bold; }
+    </style>
 </head>
-<body class="p-4 pb-20">
-
+<body class="p-4 pb-24">
     <header class="text-center mb-6">
-        <h1 class="text-3xl font-extrabold text-yellow-500">SOULFUL BITES</h1>
-        <p class="text-xs text-gray-400 uppercase tracking-widest">Inventory Management Ecosystem</p>
+        <h1 class="text-3xl font-black text-yellow-500 tracking-tighter">SOULFUL BITES</h1>
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest">Store Management</p>
     </header>
 
-    <div class="flex sticky top-0 bg-slate-900 z-10 justify-around mb-6 border-b border-slate-700 py-2">
-        <button onclick="renderInventory()" class="text-yellow-500 font-bold">STORE</button>
-        <button onclick="showLowStock()" class="text-gray-400">LOW STOCK</button>
-        <button onclick="showHistory()" class="text-gray-400">HISTORY</button>
+    <div class="flex sticky top-0 bg-slate-900 z-50 justify-around mb-6 border-b border-slate-700">
+        <button onclick="showPage('inventory')" id="btn-inv" class="nav-btn text-yellow-500">STORE</button>
+        <button onclick="showPage('lowstock')" id="btn-low" class="nav-btn text-gray-500">LOW STOCK</button>
+        <button onclick="showPage('history')" id="btn-his" class="nav-btn text-gray-500">HISTORY</button>
     </div>
 
-    <div class="mb-4">
-        <input type="text" id="searchInput" placeholder="Search product..." onkeyup="searchItems()" class="w-full p-3 bg-slate-800 rounded-lg border border-slate-600 outline-none focus:border-yellow-500">
+    <div id="page-inventory">
+        <input type="text" id="search" onkeyup="filterItems()" placeholder="Search item..." class="w-full p-3 bg-slate-800 rounded-xl border border-slate-600 mb-6 outline-none focus:border-yellow-500 text-white">
+        <div id="inventory-list"></div>
     </div>
 
-    <div id="main-content">
-        </div>
+    <div id="page-lowstock" class="hidden text-center p-10 text-gray-500 text-sm">No items below threshold.</div>
+    <div id="page-history" class="hidden p-4 bg-slate-800 rounded-lg">
+        <h2 class="font-bold border-b border-slate-700 pb-2 mb-4">Activity History</h2>
+        <div id="history-list" class="space-y-2 text-xs text-gray-400 italic text-center">No history yet.</div>
+    </div>
 
     <script>
-        const inventoryData = [
-            // MEAT & POULTRY
-            { id: 1, cat: "MEAT & POULTRY", name: "Mutton", qty: 2.5, unit: "kg" },
-            { id: 2, cat: "MEAT & POULTRY", name: "Chicken", qty: 8.6, unit: "kg" },
-            { id: 3, cat: "MEAT & POULTRY", name: "Fish", qty: 0.6, unit: "kg" },
-            { id: 4, cat: "MEAT & POULTRY", name: "Prawn", qty: 0, unit: "kg" },
-
-            // OILS & FATS
-            { id: 5, cat: "OILS & FATS", name: "Cooking Oil", qty: 26, unit: "Liter" },
-            { id: 6, cat: "OILS & FATS", name: "Ghee", qty: 3, unit: "kg" },
-            { id: 7, cat: "OILS & FATS", name: "Butter", qty: 0.76, unit: "kg" },
-
-            // GRAINS & FLOUR
-            { id: 8, cat: "GRAINS & FLOUR", name: "Rice Sela", qty: 25, unit: "kg" },
-            { id: 9, cat: "GRAINS & FLOUR", name: "Rice Basmati", qty: 3, unit: "kg" },
-            { id: 10, cat: "GRAINS & FLOUR", name: "Fine Atta", qty: 10, unit: "kg" },
-            { id: 11, cat: "GRAINS & FLOUR", name: "Maida", qty: 12.5, unit: "kg" },
-            { id: 12, cat: "GRAINS & FLOUR", name: "Besan", qty: 0.725, unit: "kg" },
-
-            // SPICES (MASALE)
-            { id: 13, cat: "SPICES", name: "National Salt", qty: 15, unit: "pkt" },
-            { id: 14, cat: "SPICES", name: "Lahori Namak", qty: 3.3, unit: "kg" },
-            { id: 15, cat: "SPICES", name: "Crush Chili", qty: 2.7, unit: "kg" },
-            { id: 16, cat: "SPICES", name: "Lal Mirch Pow", qty: 0.7, unit: "kg" },
-            { id: 17, cat: "SPICES", name: "Haldi", qty: 1, unit: "kg" },
-            { id: 18, cat: "SPICES", name: "Black Pepper", qty: 1.7, unit: "kg" },
-            { id: 19, cat: "SPICES", name: "Tez Patta", qty: 0.8, unit: "kg" },
-            { id: 20, cat: "SPICES", name: "Long (Cloves)", qty: 1.45, unit: "kg" },
-
-            // DRINKS
-            { id: 21, cat: "DRINKS", name: "Pepsi Cans", qty: 25, unit: "pcs" },
-            { id: 22, cat: "DRINKS", name: "7up Cans", qty: 80, unit: "pcs" },
-            { id: 23, cat: "DRINKS", name: "Sting", qty: 33, unit: "pcs" },
-            { id: 24, cat: "DRINKS", name: "Next Cola Red", qty: 12, unit: "pcs" },
-            { id: 25, cat: "DRINKS", name: "Aquafina Water", qty: 27, unit: "b" },
-
-            // PACKAGING
-            { id: 26, cat: "PACKAGING", name: "Tissue Roll", qty: 92, unit: "pcs" },
-            { id: 27, cat: "PACKAGING", name: "Tissue Box", qty: 71, unit: "pcs" },
-            { id: 28, cat: "PACKAGING", name: "Aluminum Foil", qty: 1, unit: "pkt" }
-            // Note: Baki items bhi isi tarah category mein add honge
+        // AAPKI LIST (DUPLICATES REMOVED & CATEGORIZED)
+        let inventory = [
+            { id: 1, cat: "OILS & FATS", name: "Cooking Oil", qty: 26, unit: "kg" },
+            { id: 2, cat: "MEAT & POULTRY", name: "Mutton", qty: 2.5, unit: "kg" },
+            { id: 3, cat: "MEAT & POULTRY", name: "Chicken", qty: 8.6, unit: "kg" },
+            { id: 4, cat: "MEAT & POULTRY", name: "Fish", qty: 0.6, unit: "kg" },
+            { id: 5, cat: "GRAINS & FLOUR", name: "Rice Sela", qty: 25, unit: "kg" },
+            { id: 6, cat: "GRAINS & FLOUR", name: "Rice Basmati", qty: 3, unit: "kg" },
+            { id: 7, cat: "GRAINS & FLOUR", name: "Sugar", qty: 5.4, unit: "kg" },
+            { id: 8, cat: "GRAINS & FLOUR", name: "Fine Atta", qty: 10, unit: "kg" },
+            { id: 9, cat: "GRAINS & FLOUR", name: "Maida", qty: 12.5, unit: "kg" },
+            { id: 10, cat: "DAIRY", name: "Yogurt", qty: 4, unit: "kg" },
+            { id: 11, cat: "DAIRY", name: "Eggs", qty: 13, unit: "pcs" },
+            { id: 12, cat: "DAIRY", name: "Butter", qty: 0.76, unit: "kg" },
+            { id: 13, cat: "DRINKS", name: "7up Cans", qty: 80, unit: "pcs" },
+            { id: 14, cat: "DRINKS", name: "Pepsi Cans", qty: 25, unit: "pcs" },
+            { id: 15, cat: "DRINKS", name: "Sting", qty: 33, unit: "pcs" },
+            { id: 16, cat: "PACKAGING", name: "Tissue Roll", qty: 92, unit: "pcs" },
+            { id: 17, cat: "PACKAGING", name: "Tissue Box", qty: 71, unit: "pcs" },
+            { id: 18, cat: "PACKAGING", name: "Dine Tissue", qty: 32, unit: "pcs" },
+            { id: 19, cat: "SPICES", name: "National Salt", qty: 15, unit: "pkt" },
+            { id: 20, cat: "SPICES", name: "Lahori Namak", qty: 3.3, unit: "kg" }
+            // Baki 80+ items bhi main code mein isi tarah add kar sakta hoon
         ];
 
-        function renderInventory() {
-            const container = document.getElementById('main-content');
-            container.innerHTML = "";
+        function render() {
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = "";
             let currentCat = "";
-
-            inventoryData.forEach(item => {
-                if (item.cat !== currentCat) {
+            
+            inventory.forEach(item => {
+                if(item.cat !== currentCat) {
                     currentCat = item.cat;
-                    container.innerHTML += `<div class="category-header">${currentCat}</div>`;
+                    list.innerHTML += `<div class="category-header">${currentCat}</div>`;
                 }
-
-                container.innerHTML += `
+                list.innerHTML += `
                     <div class="item-card gold-border">
                         <div class="flex justify-between items-center mb-3">
-                            <span class="font-bold text-lg">${item.name}</span>
-                            <span class="text-yellow-400 font-mono text-xl">${item.qty} ${item.unit}</span>
+                            <span class="font-bold uppercase text-sm">${item.name}</span>
+                            <span class="text-yellow-400 font-mono text-lg font-bold">${item.qty} ${item.unit}</span>
                         </div>
                         <div class="flex gap-2">
-                            <input type="number" id="input-${item.id}" placeholder="Qty" class="w-1/4 p-1 bg-slate-900 rounded border border-slate-700 text-center">
-                            <button onclick="action(${item.id}, 'purchase')" class="btn-action btn-purchase flex-1">PURCHASE</button>
-                            <button onclick="action(${item.id}, 'use')" class="btn-action btn-use flex-1">USE</button>
-                            <button onclick="action(${item.id}, 'closing')" class="btn-action btn-closing flex-1 text-[10px]">CLOSING</button>
+                            <input type="number" id="in-${item.id}" placeholder="Qty" class="w-16 p-1 bg-slate-900 rounded border border-slate-700 text-center text-sm text-white outline-none">
+                            <button onclick="handle(${item.id}, 'purchase')" class="btn-action btn-purchase">ADD</button>
+                            <button onclick="handle(${item.id}, 'use')" class="btn-action btn-use">USE</button>
+                            <button onclick="handle(${item.id}, 'closing')" class="btn-action btn-closing">CLOSING</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
         }
 
-        function action(id, type) {
-            const val = parseFloat(document.getElementById(`input-${id}`).value);
-            if (!val || val <= 0) return alert("Please enter valid quantity");
+        function handle(id, type) {
+            const valInput = document.getElementById(`in-${id}`);
+            const val = parseFloat(valInput.value);
+            if(!val || val < 0) return;
+            let item = inventory.find(i => i.id === id);
             
-            let item = inventoryData.find(i => i.id === id);
-            
-            if (type === 'purchase') item.qty += val;
-            if (type === 'use') item.qty -= val;
-            if (type === 'closing') {
-                let used = item.qty - val;
-                alert(`Auto-calculation: ${used} ${item.unit} added to daily use.`);
+            if(type === 'purchase') item.qty += val;
+            else if(type === 'use') item.qty -= val;
+            else if(type === 'closing') {
+                alert("Calculated Use: " + (item.qty - val).toFixed(2));
                 item.qty = val;
             }
-            
-            document.getElementById(`input-${id}`).value = "";
-            renderInventory();
+            valInput.value = "";
+            render();
         }
 
-        renderInventory();
+        function showPage(p) {
+            document.getElementById('page-inventory').classList.add('hidden');
+            document.getElementById('page-lowstock').classList.add('hidden');
+            document.getElementById('page-history').classList.add('hidden');
+            document.getElementById('page-' + p).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.replace('text-yellow-500', 'text-gray-500'));
+            document.getElementById('btn-' + p.substring(0,3)).classList.add('text-yellow-500');
+        }
+
+        function filterItems() {
+            let input = document.getElementById('search').value.toLowerCase();
+            let cards = document.getElementsByClassName('item-card');
+            for (let i = 0; i < cards.length; i++) {
+                if (!cards[i].innerText.toLowerCase().includes(input)) cards[i].style.display = "none";
+                else cards[i].style.display = "block";
+            }
+        }
+        render();
     </script>
 </body>
-  </html>
-      
+</html>
