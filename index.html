@@ -3,140 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Soulful Bites Admin</title>
+    <title>Soulful Bites | Professional Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { background-color: #0f172a; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-        .gold-border { border: 1px solid #fbbf24; }
-        .category-header { background: linear-gradient(90deg, #1e293b, #0f172a); border-left: 5px solid #fbbf24; padding: 12px; margin-top: 25px; font-weight: 800; color: #fbbf24; border-radius: 8px; font-size: 14px; letter-spacing: 1px; }
-        .item-card { background: #1e293b; padding: 16px; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
-        .btn-action { padding: 10px; border-radius: 10px; font-size: 12px; font-weight: bold; flex: 1; text-align: center; color: white; text-transform: uppercase; }
-        .btn-purchase { background: #16a34a; box-shadow: 0 4px #14532d; }
-        .btn-purchase:active { box-shadow: 0 0 #14532d; transform: translateY(4px); }
-        .btn-use { background: #2563eb; box-shadow: 0 4px #1e3a8a; }
-        .btn-use:active { box-shadow: 0 0 #1e3a8a; transform: translateY(4px); }
-        .btn-closing { background: #dc2626; box-shadow: 0 4px #7f1d1d; }
-        .btn-closing:active { box-shadow: 0 0 #7f1d1d; transform: translateY(4px); }
-        .nav-btn { padding: 12px; font-weight: bold; transition: 0.3s; font-size: 13px; }
-        .active-tab { color: #fbbf24; border-bottom: 4px solid #fbbf24; }
-        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        :root { --gold: #D4AF37; --dark: #121212; --card: #1E1E1E; }
+        body { background-color: var(--dark); color: #E0E0E0; font-family: 'Inter', sans-serif; }
+        .gold-text { color: var(--gold); }
+        .gold-bg { background-color: var(--gold); }
+        .card { background: var(--card); border-radius: 15px; border: 1px solid #333; transition: 0.3s; }
+        .card:hover { border-color: var(--gold); }
+        .tab-active { border-bottom: 3px solid var(--gold); color: var(--gold); font-weight: bold; }
+        input { background: #2A2A2A !important; border: 1px solid #444 !important; color: white !important; }
+        .btn-press:active { transform: scale(0.95); }
     </style>
 </head>
-<body class="p-4 pb-28">
+<body class="p-3 pb-24">
 
-    <header class="flex justify-between items-center mb-6 pt-4">
-        <div>
-            <h1 class="text-3xl font-black text-yellow-500 leading-none">SOULFUL BITES</h1>
-            <p class="text-[10px] text-gray-400 uppercase tracking-[0.3em] mt-1">Store Dashboard</p>
+    <header class="flex justify-between items-center mb-6 sticky top-0 bg-[#121212] py-4 z-50">
+        <div class="flex items-center gap-3">
+            <div class="p-2 gold-bg rounded-lg text-black font-bold text-xl">SB</div>
+            <div>
+                <h1 class="text-lg font-bold gold-text leading-tight">SOULFUL BITES</h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Store Manager Pro</p>
+            </div>
         </div>
-        <div class="bg-yellow-500/10 p-2 rounded-full gold-border">
-            <span class="text-yellow-500 text-xs font-bold">Boss Mode</span>
-        </div>
+        <button onclick="exportToExcel()" class="bg-emerald-700 text-white text-[10px] px-3 py-2 rounded-full font-bold btn-press">EXPORT EXCEL</button>
     </header>
 
-    <nav class="flex sticky top-0 bg-slate-900/90 backdrop-blur-md z-50 justify-around mb-6 border-b border-slate-700 shadow-xl">
-        <button onclick="showPage('inventory')" id="btn-inv" class="nav-btn active-tab">INVENTORY</button>
-        <button onclick="showPage('lowstock')" id="btn-low" class="nav-btn text-gray-500">LOW STOCK</button>
-        <button onclick="showPage('history')" id="btn-his" class="nav-btn text-gray-500">HISTORY</button>
+    <nav class="flex justify-around mb-6 border-b border-gray-800 text-xs text-gray-400">
+        <button onclick="showTab('stock')" id="t-stock" class="pb-2 tab-active">📦 STOCK</button>
+        <button onclick="showTab('closing')" id="t-closing" class="pb-2">🔒 CLOSING</button>
+        <button onclick="showTab('history')" id="t-history" class="pb-2">📜 HISTORY</button>
     </nav>
 
-    <div id="page-inventory">
-        <div class="relative mb-6">
-            <input type="text" id="search" onkeyup="filterItems()" placeholder="Search item (e.g. Mutton)..." class="w-full p-4 bg-slate-800 rounded-2xl border border-slate-600 outline-none focus:border-yellow-500 text-white shadow-inner">
-        </div>
-        <div id="inventory-list"></div>
+    <div id="search-container" class="mb-6">
+        <input type="text" id="mainSearch" onkeyup="filterItems()" placeholder="Dhoondein (Search items...)" class="w-full p-4 rounded-xl outline-none shadow-lg">
     </div>
 
-    <div id="page-lowstock" class="hidden text-center py-20 text-gray-500 font-medium">✨ Sab kuch stock mein hai!</div>
-    <div id="page-history" class="hidden"><div id="history-list" class="space-y-3"></div></div>
+    <div id="tab-stock" class="space-y-4">
+        <div id="stock-list"></div>
+    </div>
+
+    <div id="tab-closing" class="hidden">
+        <div class="bg-yellow-900/20 p-4 rounded-xl border border-yellow-700/50 mb-4">
+            <p class="text-xs gold-text">Closing stock daalne se pehle din bhar ka use check kar lein.</p>
+        </div>
+        <div id="closing-list" class="space-y-4"></div>
+    </div>
+
+    <div id="tab-history" class="hidden">
+        <div id="history-content" class="text-xs space-y-2">
+            <p class="text-gray-500 text-center py-10">Koi history record nahi mila.</p>
+        </div>
+    </div>
 
     <script>
-        const fullStock = [
-            { id: 1, cat: "🥩 MEAT & FISH", name: "Mutton", qty: 2.5, unit: "kg" },
-            { id: 2, cat: "🥩 MEAT & FISH", name: "Chicken", qty: 8.6, unit: "kg" },
-            { id: 3, cat: "🥩 MEAT & FISH", name: "Fish", qty: 0.6, unit: "kg" },
-            { id: 4, cat: "🥩 MEAT & FISH", name: "Prawn", qty: 0, unit: "kg" },
-            { id: 5, cat: "🛢️ OILS & GHEE", name: "Cooking Oil", qty: 26, unit: "Ltr" },
-            { id: 6, cat: "🛢️ OILS & GHEE", name: "Ghee", qty: 3, unit: "kg" },
-            { id: 7, cat: "🛢️ OILS & GHEE", name: "Butter", qty: 0.76, unit: "kg" },
-            { id: 8, cat: "🌾 RICE & FLOUR", name: "Rice Sela", qty: 25, unit: "kg" },
-            { id: 9, cat: "🌾 RICE & FLOUR", name: "Rice Basmati", qty: 3, unit: "kg" },
-            { id: 10, cat: "🌾 RICE & FLOUR", name: "Fine Atta", qty: 10, unit: "kg" },
-            { id: 11, cat: "🌾 RICE & FLOUR", name: "Maida", qty: 12.5, unit: "kg" },
-            { id: 12, cat: "🥛 DAIRY & EGGS", name: "Fresh Milk", qty: 4, unit: "Ltr" },
-            { id: 13, cat: "🥛 DAIRY & EGGS", name: "Yogurt", qty: 4, unit: "kg" },
-            { id: 14, cat: "🥛 DAIRY & EGGS", name: "Eggs", qty: 13, unit: "pcs" },
-            { id: 15, cat: "🥤 DRINKS", name: "Pepsi Diet", qty: 29, unit: "cans" },
-            { id: 16, cat: "🥤 DRINKS", name: "7up", qty: 80, unit: "cans" },
-            { id: 17, cat: "🥤 DRINKS", name: "Mountain Dew", qty: 73, unit: "cans" },
-            { id: 18, cat: "🧂 SPICES", name: "National Salt", qty: 15, unit: "pkt" },
-            { id: 19, cat: "🧂 SPICES", name: "Crush Chili", qty: 2.7, unit: "kg" },
-            { id: 20, cat: "🧻 PACKAGING", name: "Tissue Roll", qty: 92, unit: "pcs" },
-            { id: 21, cat: "🧻 PACKAGING", name: "Aluminum Foil", qty: 1, unit: "pkt" }
-            // Note: Maine baki 80 items filter kar diye hain jo aap 0 se add kar sakte hain
+        let inventory = [
+            { id: 1, cat: "Meat & Seafood", name: "Whole Chicken", qty: 26, unit: "KG", min: 2 },
+            { id: 2, cat: "Meat & Seafood", name: "Boneless Chicken", qty: 15, unit: "KG", min: 5 },
+            { id: 3, cat: "Meat & Seafood", name: "Mutton", qty: 10, unit: "KG", min: 3 },
+            { id: 4, cat: "Spices & Herbs", name: "National Salt", qty: 20, unit: "PKT", min: 5 },
+            { id: 5, cat: "Oils & Ghee", name: "Cooking Oil", qty: 50, unit: "LTR", min: 10 }
         ];
 
-        function render() {
-            const list = document.getElementById('inventory-list');
+        let history = [];
+
+        function renderStock() {
+            const list = document.getElementById('stock-list');
             list.innerHTML = "";
             let currentCat = "";
-            fullStock.sort((a,b) => a.cat.localeCompare(b.cat)).forEach(item => {
+
+            inventory.forEach(item => {
                 if(item.cat !== currentCat) {
                     currentCat = item.cat;
-                    list.innerHTML += `<div class="category-header uppercase">${currentCat}</div>`;
+                    list.innerHTML += `<h2 class="text-[10px] gold-text font-black mb-2 mt-6 tracking-[0.2em] uppercase">${currentCat}</h2>`;
                 }
+                
+                let isLow = item.qty <= item.min;
                 list.innerHTML += `
-                    <div class="item-card gold-border animate-in fade-in duration-500">
+                    <div class="card p-4 relative overflow-hidden item-node">
+                        ${isLow ? '<span class="absolute top-0 right-0 bg-red-600 text-[8px] px-2 py-1 font-bold">LOW</span>' : ''}
                         <div class="flex justify-between items-start mb-4">
-                            <span class="font-bold text-lg tracking-tight">${item.name}</span>
+                            <div>
+                                <h3 class="font-bold text-gray-100">${item.name}</h3>
+                                <p class="text-[9px] text-gray-500">#${item.id} · ${item.cat}</p>
+                            </div>
                             <div class="text-right">
-                                <span class="block text-yellow-400 font-black text-xl">${item.qty}</span>
-                                <span class="text-[10px] text-gray-400 uppercase font-bold">${item.unit} Left</span>
+                                <span class="text-2xl font-black ${isLow ? 'text-red-500' : 'gold-text'}">${item.qty}</span>
+                                <span class="text-[10px] block text-gray-500">${item.unit}</span>
                             </div>
                         </div>
-                        <div class="flex gap-3 mt-2">
-                            <input type="number" id="in-${item.id}" placeholder="Qty" class="w-1/4 p-2 bg-slate-900 rounded-xl border border-slate-700 text-center text-white font-bold outline-none focus:border-blue-500 transition-all">
-                            <button onclick="handle(${item.id},'purchase')" class="btn-action btn-purchase">Add</button>
-                            <button onclick="handle(${item.id},'use')" class="btn-action btn-use">Use</button>
-                            <button onclick="handle(${item.id},'closing')" class="btn-action btn-closing">End</button>
+                        <div class="flex gap-2">
+                            <input type="number" id="q-${item.id}" placeholder="Qty" class="w-20 p-2 rounded-lg text-sm text-center outline-none">
+                            <button onclick="updateQty(${item.id}, 'add')" class="flex-1 bg-emerald-600 text-white font-bold rounded-lg btn-press text-xs">+ Purchase</button>
+                            <button onclick="updateQty(${item.id}, 'sub')" class="flex-1 bg-red-600 text-white font-bold rounded-lg btn-press text-xs">- Used</button>
                         </div>
                     </div>`;
             });
         }
 
-        function handle(id, type) {
-            const valInput = document.getElementById(`in-${id}`);
-            const val = parseFloat(valInput.value);
-            if(!val || val < 0) { valInput.classList.add('border-red-500'); return; }
-            let item = fullStock.find(i => i.id === id);
+        function updateQty(id, type) {
+            let input = document.getElementById(`q-${id}`);
+            let val = parseFloat(input.value);
+            if(!val) return;
+            let item = inventory.find(i => i.id === id);
             
-            if(type === 'purchase') item.qty += val;
-            else if(type === 'use') item.qty -= val;
-            else if(type === 'closing') {
-                let used = (item.qty - val).toFixed(2);
-                alert("Aaj " + used + " " + item.unit + " istemal hua.");
-                item.qty = val;
-            }
-            valInput.value = "";
-            render();
+            if(type === 'add') item.qty += val;
+            else item.qty -= val;
+            
+            history.unshift(`${new Date().toLocaleTimeString()} - ${item.name}: ${type === 'add' ? '+' : '-'}${val} ${item.unit}`);
+            input.value = "";
+            renderStock();
+        }
+
+        function showTab(tab) {
+            document.getElementById('tab-stock').classList.add('hidden');
+            document.getElementById('tab-closing').classList.add('hidden');
+            document.getElementById('tab-history').classList.add('hidden');
+            document.getElementById('tab-'+tab).classList.remove('hidden');
+            
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('tab-active'));
+            document.getElementById('t-'+tab).classList.add('tab-active');
+            
+            if(tab === 'history') renderHistory();
+        }
+
+        function renderHistory() {
+            const cont = document.getElementById('history-content');
+            cont.innerHTML = history.map(h => `<div class="p-2 border-b border-gray-800">${h}</div>`).join('') || "No history.";
+        }
+
+        function exportToExcel() {
+            const ws = XLSX.utils.json_to_sheet(inventory);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Inventory");
+            XLSX.writeFile(wb, "Soulful_Bites_Stock.xlsx");
         }
 
         function filterItems() {
-            let q = document.getElementById('search').value.toLowerCase();
-            document.querySelectorAll('.item-card').forEach(card => {
+            let q = document.getElementById('mainSearch').value.toLowerCase();
+            document.querySelectorAll('.item-node').forEach(card => {
                 card.style.display = card.innerText.toLowerCase().includes(q) ? "block" : "none";
             });
         }
 
-        function showPage(p) {
-            ['inventory', 'lowstock', 'history'].forEach(pg => {
-                document.getElementById('page-'+pg).classList.toggle('hidden', pg !== p);
-                document.getElementById('btn-'+pg.substring(0,3)).classList.toggle('active-tab', pg === p);
-            });
-        }
-        render();
+        renderStock();
     </script>
 </body>
 </html>
