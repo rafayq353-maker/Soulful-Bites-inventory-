@@ -3,68 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Soulful Bites | Store Manager Pro</title>
+    <title>Soulful Bites | Admin Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --gold: #D4AF37; --dark: #121212; --card: #1E1E1E; }
-        body { background-color: var(--dark); color: #E0E0E0; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
-        .gold-text { color: var(--gold); }
-        .gold-bg { background-color: var(--gold); }
-        .card { background: var(--card); border-radius: 15px; border: 1px solid #333; }
-        .tab-active { border-bottom: 3px solid var(--gold); color: var(--gold); font-weight: bold; }
-        input { background: #2A2A2A !important; border: 1px solid #444 !important; color: white !important; outline: none; }
-        .btn-press:active { transform: scale(0.95); }
+        :root { --gold: #D4AF37; --dark: #0a0a0a; --card: #161616; }
+        body { background-color: var(--dark); color: #e0e0e0; font-family: 'Segoe UI', sans-serif; }
+        .gold-border { border: 1px solid var(--gold); }
+        .tab-btn { padding: 10px 5px; font-size: 11px; font-weight: bold; color: #666; transition: 0.3s; border-bottom: 2px solid transparent; }
+        .tab-active { color: var(--gold); border-bottom: 2px solid var(--gold); }
+        .card { background: var(--card); border-radius: 12px; margin-bottom: 10px; border: 1px solid #222; }
+        input { background: #222 !important; border: 1px solid #444 !important; color: white !important; outline: none; border-radius: 6px; }
     </style>
 </head>
-<body class="p-3 pb-24">
+<body class="pb-20">
 
-    <header class="flex justify-between items-center mb-6 sticky top-0 bg-[#121212] py-4 z-50">
-        <div class="flex items-center gap-3">
-            <div class="p-2 gold-bg rounded-lg text-black font-extrabold">SB</div>
+    <div class="p-4 bg-[#111] flex justify-between items-center sticky top-0 z-50 border-b border-gray-800">
+        <div class="flex items-center gap-2">
+            <div class="w-10 h-10 bg-yellow-600 rounded-lg flex items-center justify-center font-black text-black">SB</div>
             <div>
-                <h1 class="text-lg font-bold gold-text">SOULFUL BITES</h1>
-                <p class="text-[9px] text-gray-500 uppercase tracking-widest">Store Manager Pro</p>
+                <h1 class="text-sm font-bold tracking-tighter gold-text">SOULFUL BITES</h1>
+                <p class="text-[8px] text-gray-500 uppercase">Master Inventory v2.0</p>
             </div>
         </div>
-        <button onclick="exportToExcel()" class="bg-emerald-700 text-white text-[10px] px-4 py-2 rounded-full font-bold btn-press shadow-lg">EXCEL REPORT</button>
-    </header>
+        <div class="flex gap-2">
+            <label class="bg-blue-600 text-[9px] px-3 py-2 rounded-md font-bold cursor-pointer">
+                IMPORT <input type="file" id="fileInput" class="hidden" onchange="importExcel(event)">
+            </label>
+            <button onclick="exportExcel()" class="bg-emerald-600 text-[9px] px-3 py-2 rounded-md font-bold">EXPORT</button>
+        </div>
+    </div>
 
-    <nav class="flex justify-around mb-6 border-b border-gray-800 text-xs text-gray-400">
-        <button onclick="showTab('stock')" id="t-stock" class="pb-2 tab-active">📦 STOCK</button>
-        <button onclick="showTab('closing')" id="t-closing" class="pb-2">🔒 CLOSING</button>
-        <button onclick="showTab('history')" id="t-history" class="pb-2">📜 HISTORY</button>
+    <nav class="flex justify-around bg-[#111] border-b border-gray-900 sticky top-[73px] z-40">
+        <button onclick="showPage('stock')" id="t-stock" class="tab-btn tab-active">📦 STOCK</button>
+        <button onclick="showPage('closing')" id="t-closing" class="tab-btn">🔒 CLOSING</button>
+        <button onclick="showPage('history')" id="t-history" class="tab-btn">📜 HISTORY</button>
+        <button onclick="showPage('summary')" id="t-summary" class="tab-btn">📊 SUMMARY</button>
     </nav>
 
-    <div id="search-container" class="mb-6">
-        <input type="text" id="mainSearch" onkeyup="filterItems()" placeholder="Search items (e.g. Chicken)..." class="w-full p-4 rounded-xl shadow-inner">
-    </div>
-
-    <div id="tab-stock" class="space-y-4">
-        <div id="stock-list"></div>
-    </div>
-
-    <div id="tab-closing" class="hidden">
-        <div class="bg-yellow-900/20 p-4 rounded-xl border border-yellow-700/50 mb-4 text-xs gold-text">
-            Har item ka closing balance yahan update karein.
+    <div class="p-4">
+        <div id="page-stock">
+            <input type="text" id="search" onkeyup="filter()" placeholder="Search items..." class="w-full p-3 mb-4 text-sm">
+            <div id="stock-list"></div>
         </div>
-        <div id="closing-list" class="space-y-4"></div>
-    </div>
 
-    <div id="tab-history" class="hidden text-xs space-y-2" id="history-content">
-        <p class="text-gray-500 text-center py-10">Koi purana record nahi mila.</p>
+        <div id="page-closing" class="hidden">
+            <div id="closing-list"></div>
+        </div>
+
+        <div id="page-history" class="hidden space-y-2 text-[11px]" id="log-list"></div>
+
+        <div id="page-summary" class="hidden">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="card p-4 text-center"><p class="text-[10px] text-gray-400">TOTAL ITEMS</p><h2 id="sum-total" class="text-2xl font-bold gold-text">0</h2></div>
+                <div class="card p-4 text-center"><p class="text-[10px] text-gray-400">LOW STOCK</p><h2 id="sum-low" class="text-2xl font-bold text-red-500">0</h2></div>
+            </div>
+        </div>
     </div>
 
     <script>
         let inventory = [
-            { id: 1, cat: "Meat & Seafood", name: "Whole Chicken", qty: 26, unit: "KG", min: 2 },
-            { id: 2, cat: "Meat & Seafood", name: "Boneless Chicken", qty: 15, unit: "KG", min: 5 },
-            { id: 3, cat: "Oils & Ghee", name: "Cooking Oil", qty: 50, unit: "LTR", min: 10 },
-            { id: 4, cat: "Spices", name: "National Salt", qty: 15, unit: "PKT", min: 5 }
+            { id: 1, cat: "Meat & Seafood", name: "Whole Chicken", qty: 25, unit: "KG", min: 5 },
+            { id: 2, cat: "Spices", name: "National Salt", qty: 10, unit: "PKT", min: 2 }
         ];
         let logs = [];
 
         function render() {
             const list = document.getElementById('stock-list');
-            const cList = document.
-        
+            const cList = document.getElementById('closing-list');
+            list.innerHTML = ""; cList.innerHTML = "";
+            let lowCount = 0;
+
+            inventory.forEach(item => {
+                let isLow = item.qty <= item.min;
+                if(isLow) lowCount++;
+
+                list.innerHTML += `
+                    <div class="card p-4 item-node">
+                        <div class="flex justify-between items-start">
+                            <div><p class="text-[10px] text-yellow-600 font-bold">${item.cat}</p><h3 class="font-bold">${item.name}</h3></div>
+                            <div class="text-right"><span class="text-xl font-black ${isLow?'text-red-500':'text-white'}">${item.qty}</span><span class="text-[9px] block text-gray-500">${item.unit}</span></div>
+                        </div>
+                        <div class="flex gap-2 mt-4">
+                            <input type="number" id="in-${item.id}" placeholder="Qty" class="flex-1 p-1 text-center text-xs">
+                            <button onclick="updateQty(${item.id},'add')" class="bg-blue-700 px-4 py-2 rounded text-[10px] font-bold">ADD</button>
+                            <button onclick="updateQty(${item.id},'use')" class="bg-red-700 px-4 py-2 rounded text-[10px] font-bold">USE</button>
+                        </div>
+                    </div>`;
+
+                cList.innerHTML += `
+                    <div class="card p-3 flex justify-between items-center">
+                        <span class="text-xs font-medium">${item.name}</span>
+                        <div class="flex gap-2"><input type="number" id="cl-${item.id}" placeholder="${item.qty}" class="w-16 p-1 text-xs"><button onclick="setClosing(${item.id})" class="bg-indigo-600 px-3 py-1 rounded text-[10px]">SET</button></div>
+                    </div>`;
+            });
+            document.getElementById('sum-total').innerText = inventory.length;
+            document.getElementById('sum-low').innerText = lowCount;
+        }
+
+        function updateQty(id, type) {
+            let i = document.getElementById('in-'+id); let val = parseFloat(i.value);
+            if(!val) return;
+            let item = inventory.find(x => x.id === id);
+            item.qty = type === 'add' ? item.qty + val : item.qty - val;
+            logs.unshift(`${new Date().toLocaleTimeString()} - ${item.name}: ${type==='add'?'+':'-'}${val}`);
+            i.value = ""; render();
+        }
+
+        function setClosing(id) {
+            let i = document.getElementById('cl-'+id); let val = parseFloat(i.value);
+            if(isNaN(val)) return;
+            let item = inventory.find(x => x.id === id);
+            item.qty = val; i.value = ""; render();
+        }
+
+        function importExcel(e) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                inventory = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                render();
+            };
+            reader.readAsArrayBuffer(e.target.files[0]);
+        }
+
+        function exportExcel() {
+            const ws = XLSX.utils.json_to_sheet(inventory);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Stock");
+            XLSX.writeFile(wb, "Soulful_Bites_Master.xlsx");
+        }
+
+        function showPage(p) {
+            ['stock','closing','history','summary'].forEach(pg => {
+                document.getElementById('page-'+pg).classList.toggle('hidden', pg !== p);
+                document.getElementById('t-'+pg).classList.toggle('tab-active', pg === p);
+            });
+            if(p === 'history') document.getElementById('page-history').innerHTML = logs.map(l => `<div class="p-2 border-b border-gray-800">${l}</div>`).join('');
+        }
+        render();
+    </script>
+</body>
+                                                      </html>
+    
